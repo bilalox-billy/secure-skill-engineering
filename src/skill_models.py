@@ -102,6 +102,57 @@ class CodeReviewerInput(BaseSkillInput):
             raise ValueError(
                 f"Invalid focus areas: {invalid}. Allowed areas: {cls.ALLOWED_FOCUS_AREAS}"
             )
+        
+        return v
+
+class EntityExtractorInput(BaseSkillInput):
+    """Input Model for the entity-extractor Skill."""
+    LLOWED_ENTITY_TYPES = {"persons", "organizations", "locations", "dates"}
+
+    text: str = Field(
+        ...,
+        min_length=1,
+        description="Text to extract entities from"
+    )
+    entity_types: list[str] = Field(
+        default_factory=lambda: list(EntityExtractorInput.ALLOWED_ENTITY_TYPES),
+        description="Which entity types to extract"
+    )
+
+    @field_validator("entity_types")
+    @classmethod
+    def types_must_be_valid(cls, v: list[str]) -> list[str]:
+        invalid = set(v) - cls.ALLOWED_ENTITY_TYPES
+        if invalid:
+            raise ValueError(f"Invalid entity types: {invalid}")
+        return v if v else list(cls.ALLOWED_ENTITY_TYPES)
+    
+
+class ConceptMapperInput(BaseSkillInput):
+    """Input model for the concept-mapper Skill."""
+
+    document_text: str = Field(
+        ...,
+        min_length=20,
+        description="Text to extract concepts from"
+    )
+    max_concepts: int = Field(
+        default=10,
+        ge=1,
+        le=50,
+        description="Maximum number of concepts to extract"
+    )
+
+
+class TaskInterpreterInput(BaseSkillInput):
+    """Input model for the task-interpreter Skill (Day 7)."""
+
+    user_request: str = Field(
+        ...,
+        min_length=5,
+        max_length=2000,
+        description="Natural language request from the user"
+    )
 
 
 
