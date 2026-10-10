@@ -1,0 +1,48 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ConceptMapperOutput",
+    "type": "object",
+    "oneOf": [
+      {
+        "required": ["concepts", "relations"],
+        "properties": {
+          "concepts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "label", "type"],
+              "properties": {
+                "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                "label": {"type": "string", "minLength": 1},
+                "type": {
+                  "type": "string",
+                  "enum": ["Entity", "Process", "Property", "Relationship", "Event"]
+                }
+              }
+            },
+            "minItems": 1
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["subject", "predicate", "object"],
+              "properties": {
+                "subject": {"type": "string"},
+                "predicate": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                "object": {"type": "string"}
+              }
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "required": ["error"],
+        "properties": {
+          "error": {"type": "string"}
+        }
+      }
+    ]
+  }
+  

@@ -1,0 +1,24 @@
+[project]
+name = "secure-skill-engineering"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "jsonschema>=4.26.0",
+    "langchain>=1.4.4",
+    "langchain-community>=0.4.2",
+    "langchain-core>=1.6.9",
+    "langchain-ollama>=1.1.0",
+    "langgraph>=1.2.14",
+    "pydantic>=2.14.0",
+    "pyshacl>=0.40.1",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.16.0",
+    "python-dotenv>=1.2.4",
+    "pyyaml>=6.0.3",
+    "rdflib>=7.6.0",
+    "tenacity>=9.2.1",
+]
