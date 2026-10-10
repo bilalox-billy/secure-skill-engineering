@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.28.1",
+    "ipykernel>=7.4.0",
     "jsonschema>=4.26.0",
     "langchain>=1.4.4",
     "langchain-community>=0.4.2",
@@ -25,3 +26,4 @@ dependencies = [
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
