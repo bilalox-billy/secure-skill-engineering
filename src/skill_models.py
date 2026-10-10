@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Literal
+from typing import ClassVar, Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -81,7 +81,7 @@ class DocumentSummarizerInput(BaseSkillInput):
 class CodeReviewerInput(BaseSkillInput):
     """Input model for the code-reviewer Skill."""
 
-    ALLOWED_FOCUS_AREAS = {"bugs", "style", "security", "performance", "documentation"}
+    ALLOWED_FOCUS_AREAS: ClassVar[set[str]] = {"bugs", "style", "security", "performance", "documentation"}
 
     code: str = Field(
         ...,
@@ -109,7 +109,7 @@ class CodeReviewerInput(BaseSkillInput):
 class EntityExtractorInput(BaseSkillInput):
     """Input model for the entity-extractor Skill."""
 
-    ALLOWED_ENTITY_TYPES = {"persons", "organizations", "locations", "dates"}
+    ALLOWED_ENTITY_TYPES: ClassVar[set[str]] = {"persons", "organizations", "locations", "dates"}
 
     text: str = Field(
         ...,
