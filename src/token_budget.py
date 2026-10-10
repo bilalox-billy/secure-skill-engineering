@@ -186,8 +186,9 @@ class TokenBudgetManager:
         if len(text) <= max_chars:
             return text  # No truncation needed
 
-        # Reserve space for the note
-        keep_chars = max_chars - note_chars
+        # Reserve space for the note (clamp to 0 so a negative value
+        # never turns into a Python "slice from the end" index)
+        keep_chars = max(0, max_chars - note_chars)
         return text[:keep_chars] + truncation_note
 
 
