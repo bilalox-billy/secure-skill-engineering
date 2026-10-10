@@ -82,5 +82,91 @@ class TokenBudgetManager:
         if custom_limit:
             self.limits.update(custom_limit)
         
+    
+    def estimate_tokens(self, text: str) -> int:
+
+        """Estimate token count from character count.
         
+        This is an approximation. Real token counts depend on the model's
+        specific tokenizer. For English text, 1 token ≈ 4 characters.
+        
+        Args:
+            text: Any string (prompt text, document, etc.)
+        
+        Returns:
+            Estimated number of tokens.
+        """
+
+        if not text:
+            return 0
+        
+        return max(1, len(text) // CHARS_PER_TOKEN)
+
+    
+    def get_context_limit(self, model: str) -> int:
+        """Get the context token limit for a model name.
+        
+        Handles model name variants like "llama3.2:3b" vs "llama3.2".
+        Falls back to DEFAULT_CONTEXT_LIMIT for unknown models.
+        """
+
+        if model in self.limits:
+            return self.limits[model]
+        
+        # Partial match (e.g., "llama3.2" matches "llama3.2:3b")
+        for known_model, limit in self.limits.items():
+            if model in known_model or known_model in model:
+                return limit
+        
+        # No exact match: use DEFAULT_CONTEXT_LIMIT
+        return DEFAULT_CONTEXT_LIMIT
+
+
+    def check_budget(
+        self,
+        system_prompt: str,
+        user_message: str,
+        model: str = "llama3.2:3b",
+        response_reserve: int = 512,
+    ) -> BudgetResult:
+        """Check if a prompt fits within the model's context window.
+        
+        Args:
+            system_prompt: The system message content
+            user_message: The user message content
+            model: The Ollama model name
+            response_reserve: Tokens to reserve for the model's response
+        
+        Returns:
+            BudgetResult with fits=True if the total fits within the context.
+        """
+
+        context_limit = self.get_context_limit(model)
+
+        system_tokens = self.estimate_tokens(system_prompt)
+        user_tokens = self.estimate_tokens(user_message)
+        total_input_tokens = system_tokens + user_tokens
+
+        available_for_response = context_limit - total_input_tokens
+        fits = available_for_response >= response_reserve
+
+        overflow_by = max(0, response_reserve - available_for_response)
+
+        return BudgetResult(
+            fits=fits,
+            estimated_input_tokens=total_input_tokens,
+            reserved_for_response=response_reserve,
+            context_limit=context_limit,
+            available_for_response=available_for_response,
+            overflow_by=overflow_by,
+        )
+
+        
+
+
+
+
+
+
+
 
