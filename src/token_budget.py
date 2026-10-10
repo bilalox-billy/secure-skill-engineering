@@ -161,7 +161,36 @@ class TokenBudgetManager:
             overflow_by=overflow_by,
         )
 
+    
+    def truncate_text(
+        self,
+        text: str,
+        max_tokens: int,
+        truncation_note: str = "\n\n[... document truncated to fit context window ...]",
+    ) -> str:
+        """Truncate text to fit within max_tokens.
         
+        Adds a truncation note so the LLM knows the text was cut.
+        
+        Args:
+            text: The text to potentially truncate
+            max_tokens: Maximum tokens allowed
+            truncation_note: Text appended to signal truncation
+        
+        Returns:
+            Original text if it fits, or truncated text + note if not.
+        """
+        max_chars = max_tokens * CHARS_PER_TOKEN
+        note_chars = len(truncation_note)
+
+        if len(text) <= max_chars:
+            return text  # No truncation needed
+
+        # Reserve space for the note
+        keep_chars = max_chars - note_chars
+        return text[:keep_chars] + truncation_note
+
+
 
 
 
