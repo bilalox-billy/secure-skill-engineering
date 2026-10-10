@@ -54,3 +54,33 @@ MODEL_CONTEXT_LIMITS: dict[str, int] = {
 DEFAULT_CONTEXT_LIMIT: int = 4096  # Conservative default for unknown models
 CHARS_PER_TOKEN: int = 4 # Approximate: 1 token ≈ 4 English characters
 
+
+class TokenBudgetManager:
+
+    """Estimates token usage and checks if prompts fit within model limits.
+    
+    Usage:
+        manager = TokenBudgetManager()
+        result = manager.check_budget(
+            system_prompt="You are...",
+            user_message="Summarize this: ...",
+            model="llama3.2:3b",
+            response_reserve=512
+        )
+        if not result.fits:
+            print(f"Overflow by {result.overflow_by} tokens!")
+    """
+
+    def __init__(self, custom_limit: dict[str, str] | None = None):
+        """
+        Args:
+            custom_limits: Override or extend the default model context limits.
+        """
+
+        self.limits = {**MODEL_CONTEXT_LIMITS}
+
+        if custom_limit:
+            self.limits.update(custom_limit)
+        
+        
+
