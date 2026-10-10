@@ -89,4 +89,71 @@ _BLOCKING_COMPILED = [
 _WARNING_COMPILED = [
     (re.compile(pattern, re.IGNORECASE | re.MULTILINE), name)
     for pattern, name in WARNING_PATTERNS
-]M
+]
+
+class SkillSanitizer:
+    """Scans text for prompt injection patterns.
+    
+    Usage:
+        sanitizer = SkillSanitizer()
+        
+        # Check a SKILL.md's instructions
+        result = sanitizer.sanitize_instructions(skill_body_text)
+        if not result.safe:
+            raise SecurityError(f"Skill blocked: {result.detected_patterns}")
+        
+        # Check user-provided input (stricter threshold)
+        result = sanitizer.sanitize_user_input(user_text)
+        if result.warnings:
+            log.warning(f"Suspicious user input: {result.warnings}")
+    """
+
+    def sanitize_instructions(self, text: str) -> SanitizationResult:
+        """Scan Skill instruction text for injection patterns.
+        
+        Skill instructions are authored by developers, so we only BLOCK
+        on clearly malicious patterns and WARN on ambiguous ones.
+        """
+        return self._scan(text, block_on_warnings=False)
+
+    def sanitize_user_input(self, text: str) -> SanitizationResult:
+        """Scan user-provided input for injection patterns.
+        
+        User inputs are higher risk — we BLOCK on both blocking patterns
+        AND warning patterns (stricter than sanitize_instructions).
+        """
+        return self._scan(text, block_on_warnings=True)
+
+    def _scan(self, text: str, block_on_warnings: bool = False) -> SanitizationResult:
+        """Run all patterns against text.
+        
+        Args:
+            text: Text to scan
+            block_on_warnings: If True, warning-level patterns also block execution
+        """
+        if not text:
+            return SanitizationResult(original=text)
+
+        detected_patterns: list[str] = []
+        warnings: list[str] = []
+        blocked = False
+
+        # Check blocking patterns
+        for pattern, name in _BLOCKING_COMPILED:
+            if pattern.search(text):
+                detected_patterns.append(name)
+                blocked = True
+
+        # Check warning patterns
+        for pattern, name in _WARNING_COMPILED:
+            if pattern.search(text):
+                warnings.append(name)
+                if block_on_warnings:
+                    blocked = True
+
+        return SanitizationResult(
+            original=text,
+            blocked=blocked,
+            warnings=warnings,
+            detected_patterns=detected_patterns,
+        )
