@@ -13,9 +13,11 @@ Key design decisions:
 """
 
 from __future__ import annotations
+
 import uuid
 from datetime import datetime, timezone
 from typing import Literal
+
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
@@ -27,25 +29,26 @@ class BaseSkillInput(BaseModel):
     dry_run=True lets you test the pipeline without calling the LLM.
     """
 
-    request_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    
-    timestamp: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-        description="ISO 8601 timestamp of when the request was made"
+    # auto-generated fields
+    request_id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique identifier for this execution request"
     )
-
+    timestamp: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        description="ISO 8601 timestamp when the request was created"
+    )
     dry_run: bool = Field(
-        default=True,
-        description="If True, the skill will not be executed and will return debug information only"
-
+        default=False,
+        description="If True, skip LLM call and return prompt details only"
     )
 
     model_config = {
-        "extra": "forbid", # Reject unkown fields
-        "str_strip_whitespace": True, # Auto-strip leading/trailing whitespace 
+        "extra": "forbid",       # Reject unknown fields — strict contract
+        "str_strip_whitespace": True,  # Auto-strip leading/trailing whitespace
     }
 
-# Skill-Specific Models
+
 
 class DocumentSummarizerInput(BaseSkillInput):
     """Input model for the document-summarizer Skill.
@@ -54,60 +57,59 @@ class DocumentSummarizerInput(BaseSkillInput):
       - document_text must be non-empty and at least 10 characters
       - max_length must be between 50 and 2000 words
     """
-
-    document_text: str =Field(
-        ..., # ... means required
+    document_text: str = Field(
+        ...,   # ... means "required" in Pydantic
         min_length=10,
         description="The document text to summarize"
     )
-
     max_length: int = Field(
-        default=500,
-        ge=50, # Greater than or equal to 50
-        le=2000, # Less than or equal to 2000
-        description="The maximum number of words in the summary"
+        default=200,
+        ge=50,    # greater than or equal to 50
+        le=2000,  # less than or equal to 2000
+        description="Maximum word count for the summary"
     )
 
     @field_validator("document_text")
     @classmethod
     def document_must_not_be_only_whitespace(cls, v: str) -> str:
-        """Strip Whitespaces then check it's not empty."""
+        """Strip whitespace then check it's not empty."""
         if not v.strip():
-            raise ValueError("Document text must not be empty or only whitespace")
+            raise ValueError("document_text cannot be only whitespace")
         return v
 
 
 class CodeReviewerInput(BaseSkillInput):
-    """Input Model for the code-reviewer Skill."""
+    """Input model for the code-reviewer Skill."""
 
     ALLOWED_FOCUS_AREAS = {"bugs", "style", "security", "performance", "documentation"}
 
     code: str = Field(
         ...,
         min_length=1,
-        description="Python code to review"
+        description="Python source code to review"
     )
-
     review_focus: list[str] = Field(
         default_factory=list,
-        description="Which aspects to focus on. Empty = review everything"
+        description="Which aspects to focus on. Empty = review everything."
     )
 
     @field_validator("review_focus")
     @classmethod
-    def focus_areas_must_be_valid(cls, v: list[str]) -> list[str]:
-        """Validate that focus areas are in the allowed list."""
+    def focus_must_be_valid(cls, v: list[str]) -> list[str]:
+        """Each focus area must be from the allowed set."""
         invalid = set(v) - cls.ALLOWED_FOCUS_AREAS
         if invalid:
             raise ValueError(
-                f"Invalid focus areas: {invalid}. Allowed areas: {cls.ALLOWED_FOCUS_AREAS}"
+                f"Invalid focus areas: {invalid}. "
+                f"Allowed: {cls.ALLOWED_FOCUS_AREAS}"
             )
-        
         return v
 
+
 class EntityExtractorInput(BaseSkillInput):
-    """Input Model for the entity-extractor Skill."""
-    LLOWED_ENTITY_TYPES = {"persons", "organizations", "locations", "dates"}
+    """Input model for the entity-extractor Skill."""
+
+    ALLOWED_ENTITY_TYPES = {"persons", "organizations", "locations", "dates"}
 
     text: str = Field(
         ...,
@@ -126,7 +128,7 @@ class EntityExtractorInput(BaseSkillInput):
         if invalid:
             raise ValueError(f"Invalid entity types: {invalid}")
         return v if v else list(cls.ALLOWED_ENTITY_TYPES)
-    
+
 
 class ConceptMapperInput(BaseSkillInput):
     """Input model for the concept-mapper Skill."""
@@ -155,16 +157,12 @@ class TaskInterpreterInput(BaseSkillInput):
     )
 
 
+# Registry: maps skill names to their input model
 
-# registry: maps skills to their input models
-
-KILL_INPUT_MODELS: dict[str, type[BaseSkillInput]] = {
+SKILL_INPUT_MODELS: dict[str, type[BaseSkillInput]] = {
     "document-summarizer": DocumentSummarizerInput,
     "code-reviewer": CodeReviewerInput,
     "entity-extractor": EntityExtractorInput,
     "concept-mapper": ConceptMapperInput,
     "task-interpreter": TaskInterpreterInput,
 }
-
-
-
