@@ -156,3 +156,15 @@ class TaskInterpreterInput(BaseSkillInput):
 
 
 
+# registry: maps skills to their input models
+
+KILL_INPUT_MODELS: dict[str, type[BaseSkillInput]] = {
+    "document-summarizer": DocumentSummarizerInput,
+    "code-reviewer": CodeReviewerInput,
+    "entity-extractor": EntityExtractorInput,
+    "concept-mapper": ConceptMapperInput,
+    "task-interpreter": TaskInterpreterInput,
+}
+
+
+
