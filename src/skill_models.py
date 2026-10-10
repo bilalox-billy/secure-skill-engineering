@@ -80,3 +80,28 @@ class DocumentSummarizerInput(BaseSkillInput):
 class CodeReviewerInput(BaseSkillInput):
     """Input Model for the code-reviewer Skill."""
 
+    ALLOWED_FOCUS_AREAS = {"bugs", "style", "security", "performance", "documentation"}
+
+    code: str = Field(
+        ...,
+        min_length=1,
+        description="Python code to review"
+    )
+
+    review_focus: list[str] = Field(
+        default_factory=list,
+        description="Which aspects to focus on. Empty = review everything"
+    )
+
+    @field_validator("review_focus")
+    @classmethod
+    def focus_areas_must_be_valid(cls, v: list[str]) -> list[str]:
+        """Validate that focus areas are in the allowed list."""
+        invalid = set(v) - cls.ALLOWED_FOCUS_AREAS
+        if invalid:
+            raise ValueError(
+                f"Invalid focus areas: {invalid}. Allowed areas: {cls.ALLOWED_FOCUS_AREAS}"
+            )
+
+
+
